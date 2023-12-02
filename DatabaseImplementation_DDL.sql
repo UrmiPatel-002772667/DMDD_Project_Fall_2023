@@ -327,17 +327,13 @@ CREATE VIEW CustomerView AS
 SELECT CustomerID, Customer_name, Customer_email, Customer_phone
 FROM CUSTOMER;
 
-
-
 --Non-Clustered Index in EmployeeType of EMPLOYEE Table
 CREATE NONCLUSTERED INDEX IX_EmployeeType
 ON EMPLOYEE (EmployeeType);
  
- 
 --Non-Clustered Index in RoomID, SEmployeeID of STAFFASSIGNMENT Table
 CREATE NONCLUSTERED INDEX IX_StaffAssignment
 ON STAFFASSIGNMENT (RoomID, SEmployeeID);
- 
  
 --Non-Clustered Index in SEmployeeID of STAFFASSIGNMENT Table
 CREATE NONCLUSTERED INDEX IX_SEmployeeID
@@ -346,7 +342,6 @@ ON STAFFASSIGNMENT (SEmployeeID);
 --Non-Clustered Index in Customer_name of CUSTOMER Table
 CREATE NONCLUSTERED INDEX IX_CustomerName
 ON CUSTOMER (Customer_name);
-
 
 --DML TRIGGER
 CREATE TRIGGER tr_booking_insert
@@ -361,6 +356,21 @@ BEGIN
    INNER JOIN PACKAGE p ON r.HotelID = p.HotelID;
 END;
 
+-- Create a partition function
+CREATE PARTITION FUNCTION PF_Booking_CheckinDate (INT)
+AS RANGE LEFT FOR VALUES (20230101, 20240101);
+
+-- Create a partition scheme
+CREATE PARTITION SCHEME PS_Booking_CheckinDate
+AS PARTITION PF_Booking_CheckinDate
+TO ([PRIMARY], [PRIMARY], [PRIMARY]);
+
+-- Alter the table to use a partition scheme
+ALTER TABLE BOOKING DROP CONSTRAINT BOOKING_PK;
+
+ALTER TABLE BOOKING
+ADD CONSTRAINT BOOKING_PK PRIMARY KEY (BookingID, Checkin_Date)
+WITH (STATISTICS_NORECOMPUTE = OFF) ON PS_Booking_CheckinDate(Checkin_Date);
 
 
 
